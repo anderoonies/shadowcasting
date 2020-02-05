@@ -19,7 +19,6 @@
 .cell {
   width: 22px;
   height: 22px;
-  border: 1px dashed #d8d8d8;
 }
 
 .bright {
@@ -31,7 +30,24 @@
 }
 
 .dark {
-  background-color: grey;
+  background-color: darkgrey;
+}
+
+.black {
+    background-color: black;
+}
+
+.remembered {
+    background-color: #6a6a79;
+    color: black;
+}
+
+.wall {
+    background-color: #736066;
+}
+
+.remembered-wall {
+    background-color: #424675;
 }
 
 .CA {

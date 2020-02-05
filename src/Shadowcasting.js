@@ -1,7 +1,10 @@
 import React, { Component } from "react";
 
 const CELL_WIDTH = 1;
-
+const BRIGHT_THRESHOLD = 10;
+const DIM_THRESHOLD = 30;
+const DARK_THRESHOLD = 60;
+const DARKNESS_MAX = 500;
 
 // http://www.roguebasin.com/index.php?title=FOV_using_recursive_shadowcasting
 //              Shared
@@ -38,15 +41,33 @@ const octantTransforms = [
   { xx: 1, xy: 0, yx: 0, yy: -1 }
 ];
 
-function Cell({ state, row, col, light, player, key, onClick }) {
-    let lightClass;
-    if (light <= 10) {
-        lightClass = 'bright';
-    } else if (light <= 100) {
-        lightClass = 'dim'
-    } else {
-        lightClass = 'dark';
+function Cell({ state, row, col, light, player, key, memory, onClick }) {
+  let lightClass;
+  if (light <= BRIGHT_THRESHOLD) {
+    lightClass = "bright";
+  } else if (light <= DIM_THRESHOLD) {
+    lightClass = "dim";
+  } else if (light <= DARK_THRESHOLD) {
+    lightClass = "dark";
+  } else {
+    lightClass = "black";
+  }
+
+  if (light > DARK_THRESHOLD) {
+    if (memory) {
+      state = memory;
+      if (state === "#") {
+        lightClass = "remembered-wall";
+      } else {
+        lightClass = "remembered";
+      }
     }
+  } else {
+    if (state === "#") {
+      lightClass = "wall";
+    }
+  }
+
   return (
     <div
       key={key}
@@ -60,7 +81,7 @@ function Cell({ state, row, col, light, player, key, onClick }) {
   );
 }
 
-function Grid({ dungeon, light, playerPosition, onClick }) {
+function Grid({ dungeon, light, memory, playerPosition, onClick }) {
   return (
     <div className="grid">
       {dungeon.map((rowState, row) => {
@@ -77,7 +98,8 @@ function Grid({ dungeon, light, playerPosition, onClick }) {
                 col,
                 onClick: function() {
                   onClick(row, col);
-                }
+                },
+                memory: memory[row][col]
               });
             })}
           </div>
@@ -102,7 +124,7 @@ export default class Shadowscaster extends Component {
       "#####........#......##..#",
       "#...#...................#",
       "#...#............#......#",
-      "#########################",
+      "#########################"
     ];
 
     const dungeon = dungeonString.map(row => {
@@ -113,8 +135,12 @@ export default class Shadowscaster extends Component {
     const width = dungeon[0].length;
 
     const initialLight = new Array(height)
-      .fill(Math.inf)
-      .map(() => new Array(width).fill(Math.inf));
+      .fill(DARKNESS_MAX)
+      .map(() => new Array(width).fill(DARKNESS_MAX));
+
+    const initialMemory = new Array(height)
+      .fill(0)
+      .map(() => new Array(width).fill(0));
 
     const player = {
       x: 1,
@@ -126,10 +152,12 @@ export default class Shadowscaster extends Component {
       height,
       width,
       light: initialLight,
-      player
+      player,
+      memory: initialMemory
     };
 
     this.updatedLight = initialLight;
+    this.updatedMemory = initialMemory;
   }
 
   getSlope(x, y) {
@@ -169,7 +197,11 @@ export default class Shadowscaster extends Component {
           break;
         }
 
-        this.updatedLight[gridY][gridX] = xc * xc + yc * yc;
+        let distanceSquared = Math.max(xc * xc + yc * yc);
+        this.updatedLight[gridY][gridX] = distanceSquared;
+        if (distanceSquared <= DARK_THRESHOLD) {
+          this.updatedMemory[gridY][gridX] = this.state.dungeon[gridY][gridX];
+        }
 
         let currentlyBlocked = this.state.dungeon[gridY][gridX] === "#";
         if (previousWasBlocked) {
@@ -206,8 +238,8 @@ export default class Shadowscaster extends Component {
   scan() {
     this.setState({
       light: new Array(this.state.height)
-        .fill(Math.inf)
-        .map(() => new Array(this.state.width).fill(Math.inf))
+        .fill(DARKNESS_MAX)
+        .map(() => new Array(this.state.width).fill(DARKNESS_MAX))
     });
 
     this.updatedLight = Object.assign({}, this.state.light);
@@ -221,7 +253,8 @@ export default class Shadowscaster extends Component {
       });
     }
     this.setState({
-      light: this.updatedLight
+      light: this.updatedLight,
+      memory: this.updatedMemory
     });
   }
 
@@ -265,17 +298,20 @@ export default class Shadowscaster extends Component {
     let dungeon = this.state.dungeon;
     dungeon[row][col] = dungeon[row][col] === "#" ? "." : "#";
     this.setState({
-      dungeon: dungeon,
+      dungeon: dungeon
     });
     this.scan();
   }
 
   render() {
+    console.log(this.state.memory);
+    console.log(this.state.light);
     return (
       <div className="CA">
         {Grid({
           dungeon: this.state.dungeon,
           light: this.state.light,
+          memory: this.state.memory,
           playerPosition: this.state.player,
           onClick: (row, col) => {
             this.toggle(row, col);
