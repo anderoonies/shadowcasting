@@ -84,6 +84,11 @@
     height: 30px;
     width: 30px;
     border: 1px dashed grey;
+    margin-bottom: 0;
+    padding: 0;
+    line-height: normal;
+    font-size: inherit;
+    letter-spacing: 0;
 }
 
 .dpad .space {
