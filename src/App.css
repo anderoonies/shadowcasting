@@ -54,6 +54,7 @@
   display: flex;
   flex-flow: column;
   align-items: flex-start;
+  line-height: normal;
 }
 
 .rules {
