@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import Dpad from "./Dpad";
 
 const CELL_WIDTH = 1;
 const BRIGHT_THRESHOLD = 10;
@@ -236,13 +237,9 @@ export default class Shadowscaster extends Component {
   }
 
   scan() {
-    this.setState({
-      light: new Array(this.state.height)
-        .fill(DARKNESS_MAX)
-        .map(() => new Array(this.state.width).fill(DARKNESS_MAX))
-    });
-
-    this.updatedLight = Object.assign({}, this.state.light);
+    this.updatedLight = new Array(this.state.height)
+      .fill(DARKNESS_MAX)
+      .map(() => new Array(this.state.width).fill(DARKNESS_MAX));
     this.updatedLight[this.state.player.y][this.state.player.x] = 0;
     for (var octant = 0; octant < 8; octant++) {
       this.cast({
@@ -252,43 +249,133 @@ export default class Shadowscaster extends Component {
         transform: octantTransforms[octant]
       });
     }
+    return { light: this.updatedLight, memory: this.updatedMemory };
+  }
+
+  moveLeft() {
     this.setState({
-      light: this.updatedLight,
-      memory: this.updatedMemory
+      player: {
+        ...this.state.player,
+        x: Math.max(0, this.state.player.x - 1)
+      }
+    });
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
+    });
+  }
+
+  moveRight() {
+    this.setState({
+      player: {
+        ...this.state.player,
+        x: Math.min(this.state.width - 1, this.state.player.x + 1)
+      }
+    });
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
+    });
+  }
+
+  moveDown() {
+    this.setState({
+      player: {
+        ...this.state.player,
+        y: Math.min(this.state.height - 1, this.state.player.y + 1)
+      }
+    });
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
+    });
+  }
+
+  moveUp() {
+    this.setState({
+      player: {
+        ...this.state.player,
+        y: Math.max(0, this.state.player.y - 1)
+      }
+    });
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
+    });
+  }
+
+  moveUpLeft() {
+    this.setState({
+      player: {
+        x: Math.max(0, this.state.player.x - 1),
+        y: Math.max(0, this.state.player.y - 1)
+      }
+    });
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
+    });
+  }
+
+  moveUpRight() {
+    this.setState({
+      player: {
+        x: Math.min(this.state.width - 1, this.state.player.x + 1),
+        y: Math.max(0, this.state.player.y - 1)
+      }
+    });
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
+    });
+  }
+
+  moveDownLeft() {
+    this.setState({
+      player: {
+        x: Math.max(0, this.state.player.x - 1),
+        y: Math.min(this.state.height - 1, this.state.player.y + 1)
+      }
+    });
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
+    });
+  }
+
+  moveDownRight() {
+    this.setState({
+      player: {
+        x: Math.min(this.state.width - 1, this.state.player.x + 1),
+        y: Math.min(this.state.height - 1, this.state.player.y + 1)
+      }
+    });
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
     });
   }
 
   componentDidMount() {
-    this.scan();
+    let { light, memory } = this.scan();
+    this.setState({ light, memory });
     window.addEventListener("keydown", e => {
       if (e.keyCode === 38) {
-        this.setState({
-          player: {
-            ...this.state.player,
-            y: Math.max(0, this.state.player.y - 1)
-          }
-        });
+        this.moveUp();
       } else if (e.keyCode === 40) {
-        this.setState({
-          player: {
-            ...this.state.player,
-            y: Math.min(this.state.height, this.state.player.y + 1)
-          }
-        });
+        this.moveDown();
       } else if (e.keyCode === 37) {
-        this.setState({
-          player: {
-            ...this.state.player,
-            x: Math.max(0, this.state.player.x - 1)
-          }
-        });
+        this.moveLeft();
       } else if (e.keyCode === 39) {
-        this.setState({
-          player: {
-            ...this.state.player,
-            x: Math.min(this.state.width, this.state.player.x + 1)
-          }
-        });
+        this.moveRight();
       }
       this.scan();
     });
@@ -300,12 +387,16 @@ export default class Shadowscaster extends Component {
     this.setState({
       dungeon: dungeon
     });
-    this.scan();
+    let { light, memory } = this.scan();
+    this.setState({
+      light,
+      memory
+    });
   }
 
   render() {
     return (
-      <div className="CA">
+      <div className="dungeon">
         {Grid({
           dungeon: this.state.dungeon,
           light: this.state.light,
@@ -315,6 +406,18 @@ export default class Shadowscaster extends Component {
             this.toggle(row, col);
           }
         })}
+        <Dpad
+          handlers={{
+            ul: this.moveUpLeft.bind(this),
+            ur: this.moveUpRight.bind(this),
+            u: this.moveUp.bind(this),
+            l: this.moveLeft.bind(this),
+            r: this.moveRight.bind(this),
+            dl: this.moveDownLeft.bind(this),
+            d: this.moveDown.bind(this),
+            dr: this.moveDownRight.bind(this)
+          }}
+        />
       </div>
     );
   }

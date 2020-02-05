@@ -50,9 +50,9 @@
     background-color: #424675;
 }
 
-.CA {
+.dungeon {
   display: flex;
-  flex-flow: row;
+  flex-flow: column;
   align-items: flex-start;
 }
 
@@ -61,6 +61,35 @@
   display: flex;
   font-size: 12px;
   flex-flow: column;
+}
+
+.dpad {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.dpad-row {
+    display: flex;
+}
+
+.dpad button {
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    text-align: center;
+    height: 30px;
+    width: 30px;
+    border: 1px dashed grey;
+}
+
+.dpad .space {
+    display: flex;
+    height: 30px;
+    width: 30px;
 }
 
 @media (max-width: 1200px) {
