@@ -165,7 +165,14 @@ export default class Shadowscaster extends Component {
     return (this.state.player.x - x) / (this.state.player.y - y);
   }
 
-  cast({ startColumn, leftViewSlope, rightViewSlope, transform }) {
+  cast({
+    startColumn,
+    leftViewSlope,
+    rightViewSlope,
+    transform,
+    player,
+    dungeon
+  }) {
     let currentCol;
     let previousWasBlocked = false;
     let savedRightSlope = -1;
@@ -176,8 +183,8 @@ export default class Shadowscaster extends Component {
     ) {
       let xc = currentCol;
       for (let yc = currentCol; yc >= 0; yc--) {
-        let gridX = this.state.player.x + xc * transform.xx + yc * transform.xy;
-        let gridY = this.state.player.y + xc * transform.yx + yc * transform.yy;
+        let gridX = player.x + xc * transform.xx + yc * transform.xy;
+        let gridY = player.y + xc * transform.yx + yc * transform.yy;
 
         if (
           gridX < 0 ||
@@ -201,10 +208,10 @@ export default class Shadowscaster extends Component {
         let distanceSquared = Math.max(xc * xc + yc * yc);
         this.updatedLight[gridY][gridX] = distanceSquared;
         if (distanceSquared <= DARK_THRESHOLD) {
-          this.updatedMemory[gridY][gridX] = this.state.dungeon[gridY][gridX];
+          this.updatedMemory[gridY][gridX] = dungeon[gridY][gridX];
         }
 
-        let currentlyBlocked = this.state.dungeon[gridY][gridX] === "#";
+        let currentlyBlocked = dungeon[gridY][gridX] === "#";
         if (previousWasBlocked) {
           if (currentlyBlocked) {
             // keep traversing
@@ -220,7 +227,9 @@ export default class Shadowscaster extends Component {
                 startColumn: currentCol + 1,
                 leftViewSlope,
                 rightViewSlope: leftBlockSlope,
-                transform
+                transform,
+                player,
+                dungeon
               });
             }
 
@@ -236,136 +245,139 @@ export default class Shadowscaster extends Component {
     }
   }
 
-  scan() {
+  scan(player, dungeon) {
     this.updatedLight = new Array(this.state.height)
       .fill(DARKNESS_MAX)
       .map(() => new Array(this.state.width).fill(DARKNESS_MAX));
-    this.updatedLight[this.state.player.y][this.state.player.x] = 0;
+    this.updatedLight[player.y][player.x] = 0;
     for (var octant = 0; octant < 8; octant++) {
       this.cast({
         startColumn: 1,
         leftViewSlope: 1.0,
         rightViewSlope: 0.0,
-        transform: octantTransforms[octant]
+        transform: octantTransforms[octant],
+        player,
+        dungeon
       });
     }
     return { light: this.updatedLight, memory: this.updatedMemory };
   }
 
   moveLeft() {
-    this.setState({
-      player: {
-        ...this.state.player,
-        x: Math.max(0, this.state.player.x - 1)
-      }
-    });
-    let { light, memory } = this.scan();
+    let currentPlayer = this.state.player;
+    currentPlayer = {
+      ...this.state.player,
+      x: Math.max(0, this.state.player.x - 1)
+    };
+    let { light, memory } = this.scan(currentPlayer, this.state.dungeon);
     this.setState({
       light,
-      memory
+      memory,
+      player: currentPlayer
     });
   }
 
   moveRight() {
-    this.setState({
-      player: {
-        ...this.state.player,
-        x: Math.min(this.state.width - 1, this.state.player.x + 1)
-      }
-    });
-    let { light, memory } = this.scan();
+    let currentPlayer = this.state.player;
+    currentPlayer = {
+      ...this.state.player,
+      x: Math.min(this.state.width - 1, this.state.player.x + 1)
+    };
+
+    let { light, memory } = this.scan(currentPlayer, this.state.dungeon);
     this.setState({
       light,
-      memory
+      memory,
+      player: currentPlayer
     });
   }
 
   moveDown() {
-    this.setState({
-      player: {
-        ...this.state.player,
-        y: Math.min(this.state.height - 1, this.state.player.y + 1)
-      }
-    });
-    let { light, memory } = this.scan();
+    let currentPlayer = this.state.player;
+    currentPlayer = {
+      ...this.state.player,
+      y: Math.min(this.state.height - 1, this.state.player.y + 1)
+    };
+    let { light, memory } = this.scan(currentPlayer, this.state.dungeon);
     this.setState({
       light,
-      memory
+      memory,
+      player: currentPlayer
     });
   }
 
   moveUp() {
-    this.setState({
-      player: {
-        ...this.state.player,
-        y: Math.max(0, this.state.player.y - 1)
-      }
-    });
-    let { light, memory } = this.scan();
+    let currentPlayer = this.state.player;
+    currentPlayer = {
+      ...this.state.player,
+      y: Math.max(0, this.state.player.y - 1)
+    };
+    let { light, memory } = this.scan(currentPlayer, this.state.dungeon);
     this.setState({
       light,
-      memory
+      memory,
+      player: currentPlayer
     });
   }
 
   moveUpLeft() {
-    this.setState({
-      player: {
-        x: Math.max(0, this.state.player.x - 1),
-        y: Math.max(0, this.state.player.y - 1)
-      }
-    });
-    let { light, memory } = this.scan();
+    let currentPlayer = this.state.player;
+    currentPlayer = {
+      x: Math.max(0, this.state.player.x - 1),
+      y: Math.max(0, this.state.player.y - 1)
+    };
+    let { light, memory } = this.scan(currentPlayer, this.state.dungeon);
     this.setState({
       light,
-      memory
+      memory,
+      player: currentPlayer
     });
   }
 
   moveUpRight() {
-    this.setState({
-      player: {
-        x: Math.min(this.state.width - 1, this.state.player.x + 1),
-        y: Math.max(0, this.state.player.y - 1)
-      }
-    });
-    let { light, memory } = this.scan();
+    let currentPlayer = this.state.player;
+    currentPlayer = {
+      x: Math.min(this.state.width - 1, this.state.player.x + 1),
+      y: Math.max(0, this.state.player.y - 1)
+    };
+    let { light, memory } = this.scan(currentPlayer, this.state.dungeon);
     this.setState({
       light,
-      memory
+      memory,
+      player: currentPlayer
     });
   }
 
   moveDownLeft() {
-    this.setState({
-      player: {
-        x: Math.max(0, this.state.player.x - 1),
-        y: Math.min(this.state.height - 1, this.state.player.y + 1)
-      }
-    });
-    let { light, memory } = this.scan();
+    let currentPlayer = this.state.player;
+    currentPlayer = {
+      x: Math.max(0, this.state.player.x - 1),
+      y: Math.min(this.state.height - 1, this.state.player.y + 1)
+    };
+    let { light, memory } = this.scan(currentPlayer, this.state.dungeon);
     this.setState({
       light,
-      memory
+      memory,
+      player: currentPlayer
     });
   }
 
   moveDownRight() {
-    this.setState({
-      player: {
-        x: Math.min(this.state.width - 1, this.state.player.x + 1),
-        y: Math.min(this.state.height - 1, this.state.player.y + 1)
-      }
-    });
-    let { light, memory } = this.scan();
+    let currentPlayer = this.state.player;
+    currentPlayer = {
+      x: Math.min(this.state.width - 1, this.state.player.x + 1),
+      y: Math.min(this.state.height - 1, this.state.player.y + 1)
+    };
+    let { light, memory } = this.scan(currentPlayer, this.state.dungeon);
     this.setState({
       light,
-      memory
+      memory,
+      player: currentPlayer
     });
   }
 
   componentDidMount() {
-    let { light, memory } = this.scan();
+    let { light, memory } = this.scan(this.state.player, this.state.dungeon);
     this.setState({ light, memory });
     window.addEventListener("keydown", e => {
       if (e.keyCode === 38) {
@@ -377,7 +389,6 @@ export default class Shadowscaster extends Component {
       } else if (e.keyCode === 39) {
         this.moveRight();
       }
-      this.scan();
     });
   }
 
@@ -387,7 +398,7 @@ export default class Shadowscaster extends Component {
     this.setState({
       dungeon: dungeon
     });
-    let { light, memory } = this.scan();
+    let { light, memory } = this.scan(this.state.player, dungeon);
     this.setState({
       light,
       memory
