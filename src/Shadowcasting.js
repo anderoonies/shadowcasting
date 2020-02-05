@@ -304,8 +304,6 @@ export default class Shadowscaster extends Component {
   }
 
   render() {
-    console.log(this.state.memory);
-    console.log(this.state.light);
     return (
       <div className="CA">
         {Grid({
